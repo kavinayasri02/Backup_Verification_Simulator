@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise Backup Verification System</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #1a1a2e; color: #e0e0e0; display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  #sidebar {
+    width: 240px; min-width: 240px; background: #16213e; display: flex; flex-direction: column;
+    padding: 20px 0; border-right: 1px solid #0f3460;
+  }
+  #sidebar .logo { font-size: 22px; font-weight: bold; text-align: center; padding: 20px; color: #4da6ff; margin-bottom: 20px; }
+  #sidebar button {
+    display: block; width: calc(100% - 32px); margin: 6px 16px; padding: 12px 16px;
+    background: #0f3460; border: none; border-radius: 8px; color: #e0e0e0; font-size: 15px;
+    cursor: pointer; text-align: left; transition: background 0.2s;
+  }
+  #sidebar button:hover, #sidebar button.active { background: #4da6ff; color: #fff; }
+
+  /* Main */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  #header {
+    background: #16213e; padding: 16px 24px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #0f3460;
+  }
+  #header .title { font-size: 24px; font-weight: bold; }
+  #status { font-size: 16px; font-weight: bold; color: #4caf50; }
+
+  /* Upload Section */
+  #upload-section {
+    background: #16213e; margin: 16px; border-radius: 12px; padding: 20px;
+    border: 1px solid #0f3460;
+  }
+  #upload-section h2 { font-size: 20px; margin-bottom: 16px; }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: bold; transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #4da6ff; color: #fff; }
+  .btn-success { background: #4caf50; color: #fff; }
+  .btn-danger { background: #f44336; color: #fff; }
+  .file-label { font-size: 13px; color: #aaa; margin: 4px 0; }
+  #result-label {
+    font-size: 22px; font-weight: bold; margin-top: 12px; min-height: 36px;
+    color: #aaa;
+  }
+  #result-label.matched { color: #4caf50; }
+  #result-label.mismatch { color: #f44336; }
+  #result-label.warning { color: #ff9800; }
+
+  /* KPI Cards */
+  #kpi-cards { display: flex; gap: 12px; margin: 0 16px 16px; }
+  .card {
+    flex: 1; background: #16213e; border-radius: 12px; padding: 16px; text-align: center;
+    border: 1px solid #0f3460;
+  }
+  .card .card-title { font-size: 13px; color: #aaa; margin-bottom: 8px; }
+  .card .card-value { font-size: 28px; font-weight: bold; color: #4da6ff; }
+
+  /* Progress */
+  #progress-section { margin: 0 16px 16px; background: #16213e; border-radius: 12px; padding: 16px; border: 1px solid #0f3460; }
+  #progress-section h3 { font-size: 16px; margin-bottom: 12px; }
+  #progress-bar-wrap { background: #0f3460; border-radius: 8px; height: 16px; overflow: hidden; }
+  #progress-bar { height: 100%; background: #4da6ff; width: 0%; transition: width 0.5s; border-radius: 8px; }
+
+  /* Content area */
+  #content { flex: 1; margin: 0 16px; overflow-y: auto; background: #16213e; border-radius: 12px; padding: 20px; border: 1px solid #0f3460; }
+  #content h2 { font-size: 22px; margin-bottom: 16px; }
+  .textbox {
+    background: #0f3460; border-radius: 8px; padding: 16px; font-size: 14px; line-height: 1.8;
+    white-space: pre-wrap; color: #cdd; min-height: 120px;
+  }
+
+  /* Footer */
+  #footer {
+    background: #16213e; padding: 12px 24px; display: flex; align-items: center;
+    justify-content: space-between; border-top: 1px solid #0f3460;
+  }
+  #footer .scan-time { font-size: 13px; color: #aaa; }
+
+  /* Hidden file inputs */
+  input[type="file"] { display: none; }
+
+  /* Spinner */
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* File size info */
+  .size-info { font-size: 12px; color: #88aacc; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="logo">🛡 BackupGuard</div>
+  <button class="active" onclick="showPage('dashboard', this)">🏠 Dashboard</button>
+  <button onclick="showPage('backups', this)">📁 Backups</button>
+  <button onclick="showPage('analytics', this)">📊 Analytics</button>
+  <button onclick="showPage('alerts', this)">⚠ Alerts</button>
+</div>
+
+<!-- Main Area -->
+<div id="main">
+
+  <!-- Header -->
+  <div id="header">
+    <div class="title">Backup Verification Dashboard</div>
+    <div id="status">🟢 SYSTEM HEALTHY</div>
+  </div>
+
+  <!-- Upload Section -->
+  <div id="upload-section">
+    <h2>Database Verification</h2>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="document.getElementById('original-input').click()">📂 Upload Original</button>
+      <button class="btn btn-primary" onclick="document.getElementById('backup-input').click()">📂 Upload Backup</button>
+      <button class="btn btn-success" onclick="verifyFiles()" style="margin-left:auto">✅ Verify</button>
+    </div>
+    <input type="file" id="original-input" onchange="uploadFile('original', this)">
+    <input type="file" id="backup-input" onchange="uploadFile('backup', this)">
+    <div class="file-label" id="original-label">Original : Not Selected</div>
+    <div class="size-info" id="original-size"></div>
+    <div class="file-label" id="backup-label">Backup : Not Selected</div>
+    <div class="size-info" id="backup-size"></div>
+    <div id="result-label">Waiting For Verification</div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div id="kpi-cards">
+    <div class="card"><div class="card-title">Total Backups</div><div class="card-value">128</div></div>
+    <div class="card"><div class="card-title">Verified</div><div class="card-value">125</div></div>
+    <div class="card"><div class="card-title">Failed</div><div class="card-value">3</div></div>
+    <div class="card"><div class="card-title">Success Rate</div><div class="card-value">97.6%</div></div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div id="progress-section">
+    <h3>Verification Progress</h3>
+    <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+  </div>
+
+  <!-- Dynamic Content -->
+  <div id="content">
+    <!-- Filled by showPage() -->
+  </div>
+
+  <!-- Footer -->
+  <div id="footer">
+    <div class="scan-time">Last Scan : {{ last_scan }}</div>
+    <button class="btn btn-success" onclick="verifyFiles()">▶ Run Verification</button>
+  </div>
+
+</div>
+
+<script>
+  // Page content definitions
+  const pages = {
+    dashboard: `
+      <h2>🏠 Dashboard Overview</h2>
+      <p style="color:#aaa; margin-bottom:20px;">Backup Monitoring Service Running</p>
+      <div id="progress-bar-wrap2" style="background:#0f3460;border-radius:8px;height:20px;overflow:hidden;max-width:600px;margin:0 auto 16px;">
+        <div style="height:100%;background:#4da6ff;width:97%;border-radius:8px;"></div>
+      </div>
+      <p style="text-align:center; color:#aaa;">Current System Uptime : 99.9%</p>
+    `,
+    backups: `
+      <h2>📁 Backup Repository</h2>
+      <div class="textbox" id="backup-content">No files uploaded yet.</div>
+    `,
+    analytics: `
+      <h2>📊 Analytics Dashboard</h2>
+      <div class="textbox">
+Total Backups : 128
+
+Verified Backups : 125
+
+Failed Backups : 3
+
+Success Rate : 97.6%
+
+Average Verification Time : 3.2 Seconds
+
+Storage Usage : 74%
+
+Weekly Growth : 8%</div>
+    `,
+    alerts: `
+      <h2>⚠ Alert Center</h2>
+      <div class="textbox">
+✅ Backup Verification Successful
+
+⚠ Delayed Backup Detected
+
+⚠ Storage Usage Above 70%
+
+✅ Database Integrity Check Passed
+
+✅ Monitoring Service Running
+
+✅ Last Scan Completed Successfully</div>
+    `
+  };
+
+  let currentPage = 'dashboard';
+  let originalFile = null;
+  let backupFile = null;
+
+  function showPage(name, btn) {
+    currentPage = name;
+    document.querySelectorAll('#sidebar button').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    document.getElementById('content').innerHTML = pages[name];
+    if (name === 'backups') updateBackupContent();
+  }
+
+  function updateBackupContent() {
+    const el = document.getElementById('backup-content');
+    if (!el) return;
+    let text = '';
+    if (originalFile) text += `Original File:\n${originalFile}\n\n`;
+    if (backupFile) text += `Backup File:\n${backupFile}\n\n`;
+    if (!originalFile && !backupFile) text = 'No files uploaded yet.';
+    el.textContent = text;
+  }
+
+  function uploadFile(type, input) {
+    if (!input.files[0]) return;
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    const labelEl = document.getElementById(type + '-label');
+    const sizeEl = document.getElementById(type + '-size');
+    labelEl.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} : Uploading...`;
+    fetch('/upload_' + type, { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          labelEl.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} : Error - ${data.error}`;
+        } else {
+          labelEl.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} : ${data.name}`;
+          sizeEl.textContent = `Size: ${formatBytes(data.size)}`;
+          if (type === 'original') originalFile = data.name;
+          else backupFile = data.name;
+          if (currentPage === 'backups') updateBackupContent();
+        }
+      });
+  }
+
+  function verifyFiles() {
+    const resultEl = document.getElementById('result-label');
+    const statusEl = document.getElementById('status');
+    const progressBar = document.getElementById('progress-bar');
+    resultEl.textContent = 'Verifying...';
+    resultEl.className = '';
+    fetch('/verify', { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'error') {
+          resultEl.textContent = '⚠ ' + data.message;
+          resultEl.className = 'warning';
+        } else if (data.status === 'matched') {
+          resultEl.textContent = '🟢 MATCHED';
+          resultEl.className = 'matched';
+          statusEl.textContent = '🟢 SYSTEM HEALTHY';
+          statusEl.style.color = '#4caf50';
+          progressBar.style.width = '100%';
+        } else {
+          resultEl.textContent = '🔴 MISMATCH FOUND';
+          resultEl.className = 'mismatch';
+          statusEl.textContent = '🔴 ATTENTION REQUIRED';
+          statusEl.style.color = '#f44336';
+          progressBar.style.width = '50%';
+        }
+      });
+  }
+
+  function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // Init
+  showPage('dashboard', document.querySelector('#sidebar button'));
+</script>
+</body>
+</html>
