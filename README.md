@@ -312,8 +312,8 @@ MISMATCH FOUND
 This project was developed as an academic project to demonstrate enterprise backup monitoring and verification concepts using Python and CustomTkinter.
 
 ## Demo video link
-
-https://drive.google.com/drive/folders/1HlbK_JxQc2SFkYAU1dKZog-eJESWLV2D?usp=sharing
+Link 1 - https://kavinayasri02.github.io/Demo-video/
+Link 2 - https://drive.google.com/drive/folders/1HlbK_JxQc2SFkYAU1dKZog-eJESWLV2D?usp=sharing
 ---
 
 ## Conclusion
