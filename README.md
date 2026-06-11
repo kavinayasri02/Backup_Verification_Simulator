@@ -1,4 +1,4 @@
-# 🛡Backup Verification Siimulator
+# 🛡Backup Verification Simulator
 
 ## Overview
 
