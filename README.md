@@ -233,7 +233,7 @@ pip install -r requirements.txt
 ### Run Application
 
 ```bash
-python ui.py
+python app.py
 ```
 
 ---
